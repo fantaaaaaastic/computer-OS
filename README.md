@@ -98,7 +98,7 @@ the review of computer OS for post-graduate examination 408
 
 - Peterson解决方案
 
-  - 适用于两个进程（$P_0,P_1$）交替执行临界区的情况
+  - 适用于两个进程（$`P_0,P_1`$）交替执行临界区的情况
 
   - ```c
     do{
