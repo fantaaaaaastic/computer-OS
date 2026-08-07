@@ -1,7 +1,5 @@
 # computer-OS
 the review of computer OS for post-graduate examination 408
-# 操作系统
-
 ## 死锁
 
 ### 死锁的概念
