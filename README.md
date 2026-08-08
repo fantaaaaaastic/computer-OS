@@ -149,6 +149,7 @@ the review of computer OS for post-graduate examination 408
      - 频繁的进程切换会造成额外的上下文开销
    - 多级反馈队列调度算法
      - 设置多个就绪队列，每个就绪队列使用FCFS策略，按队列优先级调度
+     
 ## 死锁
 
 ### 死锁的概念
@@ -348,6 +349,128 @@ the review of computer OS for post-graduate examination 408
 2. 记录型信号量
 
    - 增加进程链表指针list，用于链接所有等待进程
+   - ```c
+     typedef struct{
+         int value;
+         struct PCB *list
+     }semaphore
+     wait(semaphore *S){
+         S->value--;
+         if(S->value<0)block(S->list);//该类资源分配完毕，自我阻塞并放弃处理机
+     }
+     signal(semaphore *S){
+         S->value++;
+         if(S->value<=0)wakeup(S->list)
+     }
+     ```
+
+3. 信号量的应用
+
+   - 互斥：
+     - 找出临界区
+     - 设置互斥信号量semaphore mutex=1
+     - 临界区前P(mutex)，后V(mutex)
+     - 注意：不同的临界区要设置不同的互斥信号量，P、V操作成对出现，可直接定义semaphore mutex=1而不用写繁琐的结构体
+   - 同步：
+     - 找出同步关系，确定前后顺序
+     - 设置semaphore s=0
+     - 前V P后完成代码
+
+4. 管程
+
+   - 概念：定义了一个数据结构和能为并发进程所执行的一组操作，这组操作能同步进程并且改变管程中的数据
+   - 组成部分：
+     - 管程的名称
+     - 局部用于管程的共享数据结构说明
+     - 对该数据结构进行的操作的一组过程
+     - 对局部于管程的共享数据设置初始值的语句
+
+5. 经典的同步问题
+
+   - 生产者消费者问题：
+
+     - 问题描述：在生产者和消费者之间的公用缓冲池中，具有n个缓冲区。只要缓冲池未满，生产者便可将消息送入缓冲池；只要缓冲池未空，消费者便可从缓冲池中取走一个消息。
+
+     - ```c
+       semaphore mutex=1;
+       empty=n;
+       full=0;
+       void consumer(){
+           while(1){
+              P(full);
+              P(mutex);//必须先同步后互斥
+              remove an item from buffer;
+              V(empty);
+              V(mutex);
+              comsume an item;
+           }
+       }
+       void producer(){
+           while(1){
+               produce an item nextp;
+               P(empty);
+               P(mutex);
+               add nextp to buffer;
+               V(full);
+               V(mutex);
+           }
+       }
+       ```
+
+   - 读者写者问题
+
+     - 问题描述：
+
+     - 一个数据文件或记录可被多个进程共享，我们把只要求读该文件的进程称为“reader进程”，其他进程称为“writer进程”。允许多个reader同时读，一次仅允许一个writer写，写的时候禁止其他的writer写和reader的读
+
+     - ```c
+       semaphore wmutex=1,rmutex=1;
+       int readcount=0;
+       void reader(void){
+           while(1){
+               P(rmutex);
+               if(readcount==0){
+                   P(wmutex);
+               }
+               readcount=readcount+1;
+               V(rmutex);
+               read_data_base();//读数据
+               P(rmutex);//读者读完数据要离开，先取读者计数器互斥量
+               if(readcount==0){
+                   V(wmutex);
+               }
+               V(rmutex);
+           }
+       }
+       void writer(void){
+           while(1){
+               think_up_data;//产生数据
+               P(wmutex);
+               write_data_base;//写入数据
+               V(mutex);
+           }
+       }
+       ```
+
+   - 哲学家进餐问题
+
+     - 问题描述：有5个哲学家共用1张圆桌，他们分别坐在圆桌周围的5把椅子上，在圆桌上有5个碗和5根筷子，他们的生活方式是交替地进行思考和进餐；平时，1个哲学家进行思考，其饥饿时便会试图取用左右两边最靠近自己的筷子，他只有在拿到2根筷子时才能进餐；进餐毕，放下筷子继续思考。
+
+     - ```c
+       semaphore chopstick[5]={1,1,1,1,1}
+       semaphore eating=4;
+       void philosopher(int i){//第i个哲学家程序
+           while(1){
+               P(eating);
+               P(chopstick[i]);
+               P(chopstick[(i+1)%5]);
+               eating();
+               V(chopstick[(i+1)%5]);
+               V(chopstick[i]);
+               V(eating);
+           }
+       }
+       ```
 
 ## 内存管理概述
 
